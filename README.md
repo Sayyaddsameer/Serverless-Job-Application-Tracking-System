@@ -15,19 +15,20 @@ This system ensures scalable hiring workflows, strict state transitions, backgro
 ```bash
 /serverless-ats
 │
-├── ats-job-service/
-├── ats-application-service/
-├── ats-user-sync/
-├── ats-workflow-trigger/
-├── ats-state-updater/
-├── ats-email-worker/
+├── ATS-Job-Service/
+├── ATS-Application-Service/
+├── ATS-User-Sync/
+├── ATS-Workflow-Trigger/
+├── ATS-State-Updater/
+├── ATS-Email-Worker/
 │
 ├── database/
 │   └── schema.sql
+│ 
+├── ATS_Postman_Collection.json
 │
-├── tests/
+├── Video-Demo
 │
-├── Video Demo
 └── README.md
 ```
 
@@ -62,7 +63,7 @@ The system ensures reliability, fault-tolerance, and high scalability using AWS-
 
 ### High-Level Architecture
 
-1. **Amazon API Gateway** – Entry point for all HTTPS API requests  
+1. **Amazon API Gateway** – RESTful entry point for all HTTPS API requests  
 2. **Amazon Cognito** – Authentication, JWT issuance, RBAC claims  
 3. **AWS Lambda** – Stateless compute for all services  
 4. **Amazon RDS (PostgreSQL)** – Primary database  
@@ -78,7 +79,7 @@ The system ensures reliability, fault-tolerance, and high scalability using AWS-
 | **ATS-Job-Service** | Create, read, update, delete job postings |
 | **ATS-Application-Service** | Apply for jobs, view applicants, view application history |
 | **ATS-User-Sync** | Sync Cognito users into PostgreSQL automatically |
-| **ATS-Workflow-Trigger** | Initiates Step Function for candidate workflow |
+| **ATS-Workflow-Trigger** | Orchestrator that triggers the Step Functions workflow |
 | **ATS-State-Updater** | Updates database records when state transitions happen |
 | **ATS-Email-Worker** | Sends emails asynchronously via SQS + SES |
 
@@ -115,7 +116,7 @@ graph TD
 ## Workflow & State Management
 The application lifecycle is strictly enforced by AWS Step Functions. This prevents invalid state transitions (e.g., moving a candidate from "Applied" directly to "Hired" without an interview).
 
-### Valid States: Applied → Screening → Interview → Offer → Hired
+### Valid States: Applied → Screening → Interview → Offer → Hired / Rejected
 
 ```mermaid
 
@@ -215,7 +216,7 @@ STATE_MACHINE_ARN=arn:aws:states:us-east-1:xxxx:stateMachine:ATS-Application-Wor
 
 ### 3. Database Initialization
 
-Run the SQL script located at:
+Run the SQL script located at: /database/schema.sql
 
 
 This will create all necessary tables and constraints for the ATS system.
@@ -239,7 +240,7 @@ Use the included **Postman Collection** to hit the API Gateway endpoint and test
 
 ## Testing (Postman)
 
-A complete Postman collection is included:
+A complete Postman collection is included: ATS_Postman_Collection.json
 
 
 ### **How to Test**
