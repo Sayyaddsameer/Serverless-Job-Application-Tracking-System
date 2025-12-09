@@ -11,6 +11,26 @@ This system ensures scalable hiring workflows, strict state transitions, backgro
 
 ---
 
+## Folder Structure
+/serverless-ats
+│
+├── ats-job-service/
+├── ats-application-service/
+├── ats-user-sync/
+├── ats-workflow-trigger/
+├── ats-state-updater/
+├── ats-email-worker/
+│
+├── database/
+│   └── schema.sql
+│
+├── tests/
+│
+├── Video Demo
+└── README.md
+
+---
+
 ## Demo & Documentation
 
 🔗 **Video Demo:** `LINK_TO_YOUR_YOUTUBE_VIDEO_HERE`  
