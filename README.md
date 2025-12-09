@@ -62,7 +62,7 @@ The system ensures reliability, fault-tolerance, and high scalability using AWS-
 
 ---
 
-## Data Flow Diagram (Mermaid)
+## Data Flow Diagram
 
 ```mermaid
 graph TD
@@ -88,4 +88,6 @@ graph TD
         SQS --> EmailWorker[Email Worker Lambda]
         EmailWorker --> SES[SES]
     end
+```
+
 
