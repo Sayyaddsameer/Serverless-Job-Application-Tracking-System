@@ -4,7 +4,6 @@
 ![Node.js](https://img.shields.io/badge/Node.js-20.x-green?logo=node.js)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-RDS-blue?logo=postgresql)
 ![Architecture](https://img.shields.io/badge/Microservices-Event%20Driven-purple)
-![License](https://img.shields.io/badge/License-MIT-brightgreen)
 
 A cloud-native, event-driven **Serverless ATS** designed to manage high-volume recruitment workflows.  
 Built with AWS Lambda, API Gateway, Cognito, Step Functions, SQS, SES, and PostgreSQL (RDS).  
