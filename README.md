@@ -12,6 +12,7 @@ This system ensures scalable hiring workflows, strict state transitions, backgro
 ---
 
 ## Folder Structure
+```bash
 /serverless-ats
 │
 ├── ats-job-service/
@@ -28,6 +29,7 @@ This system ensures scalable hiring workflows, strict state transitions, backgro
 │
 ├── Video Demo
 └── README.md
+```
 
 ---
 
