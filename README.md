@@ -11,27 +11,6 @@ This system ensures scalable hiring workflows, strict state transitions, backgro
 
 ---
 
-## Folder Structure
-```bash
-/serverless-ats
-│
-├── ATS-Job-Service/
-├── ATS-Application-Service/
-├── ATS-User-Sync/
-├── ATS-Workflow-Trigger/
-├── ATS-State-Updater/
-├── ATS-Email-Worker/
-│
-├── database/
-│   └── schema.sql
-│ 
-├── ATS_Postman_Collection.json
-│
-└── README.md
-```
-
----
-
 ## Demo & Documentation
 
 **Video Demo:** [Demo_Video](https://drive.google.com/file/d/1yJ_yobNCIAC2kilqh5_zLDZzGd0n44EL/view?usp=sharing)  
@@ -41,15 +20,15 @@ This system ensures scalable hiring workflows, strict state transitions, backgro
 
 # Table of Contents
 
-- [Architecture Overview](#️-architecture-overview)
+- [Architecture Overview](#-architecture-overview)
 - [Microservices](#-microservices)
-- [Workflow & State Machine](#-workflow--state-machine)
-- [Role-Based Access Control](#-role-based-access-control)
-- [Database Schema](#️-database-schema)
+- [Workflow & State Management](#-workflow--state-management)
+- [Role-Based Access Control (RBAC)](#-role-based-access-control-rbac)
+- [Database Schema (ERD)](#-database-schema-erd)
 - [Folder Structure](#-folder-structure)
-- [Setup & Installation](#️-setup--installation)
 - [Deployment Guide](#-deployment-guide)
-- [Testing (Postman)](#-testing-postman)
+- [Setup & Installation](#-setup--installation)
+- [How to Test](#-how-to-test)
 - [Author](#-author)
 
 ---
@@ -189,9 +168,95 @@ erDiagram
     }
 ```
 
-## Setup & Installation
+---
+
+## Folder Structure
+```bash
+/serverless-ats
+│
+├── ATS-Job-Service/
+├── ATS-Application-Service/
+├── ATS-User-Sync/
+├── ATS-Workflow-Trigger/
+├── ATS-State-Updater/
+├── ATS-Email-Worker/
+│
+├── database/
+│   └── schema.sql
+│ 
+├── ATS_Postman_Collection.json
+│
+└── README.md
+```
 
 ---
+
+## Deployment Guide
+
+Since this project uses a microservices architecture, deployment involves configuring AWS services individually. Below is the manual deployment strategy used for this portfolio project.
+
+### 1. Database Setup (Amazon RDS)
+1.  **Create Instance:** Launch a **PostgreSQL** instance on Amazon RDS (Free Tier eligible).
+2.  **Connectivity:** Ensure the VPC Security Group allows inbound traffic on port `5432` from your IP (for DBeaver) and from your Lambda Security Group.
+3.  **Schema Initialization:** Connect to the DB using a client like DBeaver. Open and execute the `/database/schema.sql` script to create the `users`, `jobs`, and `applications` tables.
+
+### 2. AWS Lambda Functions
+Repeat this process for **each** microservice folder (e.g., `ATS-Job-Service`, `ATS-Application-Service`):
+
+1.  **Install Dependencies:**
+    Navigate to the folder and install the required packages (like `pg`) defined in the existing `package.json`.
+    ```bash
+    cd ATS-Job-Service
+    npm install
+    ```
+2.  **Package:** Select all files inside the folder (`index.js`, `node_modules`, `package.json`) and **Zip** them.
+    * *Important:* Do not zip the parent folder; zip the *contents*.
+3.  **Upload:**
+    * Go to the AWS Lambda Console.
+    * Create a function (Runtime: **Node.js 20.x**).
+    * Upload the `.zip` file.
+4.  **Configuration:** Go to **Configuration** -> **Environment Variables** and add:
+    * `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`.
+    * *(For the Trigger Lambda only)*: Add `STATE_MACHINE_ARN`.
+
+### 3. AWS Step Functions
+1.  Create a **Standard State Machine**.
+2.  **Design Workflow:** Create a definition that chains your specific Lambdas:
+    * **Task 1:** `ATS-State-Updater` (Updates application status to "Screening").
+    * **Task 2:** `ATS-Email-Worker` (Sends SES notification).
+3.  **Permissions:** Ensure the Step Functions IAM Role has permission to invoke these Lambdas.
+4.  **Copy ARN:** Copy the **State Machine ARN** to use in the `ATS-Workflow-Trigger` Lambda environment variables.
+
+### 4. Amazon API Gateway
+1.  Create a **REST API**.
+2.  **Create Resources & Methods** (Map them to the correct Lambda):
+    * **Job Service Routes** (Integrate with `ATS-Job-Service`):
+        * `/jobs` -> `POST` (Create Job)
+        * `/jobs` -> `GET` (List Jobs)
+        * `/jobs/{id}` -> `PUT` (Update Job)
+        * `/jobs/{id}` -> `DELETE` (Delete Job)
+    * **Application Service Routes** (Integrate with `ATS-Application-Service`):
+        * `/apply` -> `POST` (Submit Application)
+        * `/my-applications` -> `GET` (Candidate History)
+        * `/job-applications` -> `GET` (Recruiter View)
+    * **Workflow Route** (Integrate with `ATS-Workflow-Trigger`):
+        * `/applications/{id}/transition` -> `POST` (Trigger Step Function)
+3.  **Enable CORS:** Select "Enable CORS" on **every** resource to allow cross-origin requests.
+4.  **Deploy:** Click **Actions** > **Deploy API** -> New Stage (e.g., `prod`).
+5.  **Copy URL:** Use the **Invoke URL** for your Postman configuration.
+
+### 5. Amazon Cognito
+1.  **User Pool:** Create a new User Pool.
+    * **Sign-in options:** Email.
+    * **Password policy:** Standard (8 chars, numbers, special chars).
+2.  **App Client:** Create an App Client.
+    * **Important:** Uncheck "Generate client secret" (required for Postman/Frontend usage).
+3.  **Authentication Flows:** Enable `ALLOW_USER_PASSWORD_AUTH` in App Client settings (required for the CLI commands in the "How to Test" section).
+4.  **Triggers:** Link the `ATS-User-Sync` Lambda to the **Post Confirmation** trigger to automatically sync users to RDS.
+
+---
+
+## Setup & Installation
 
 ### **1. Prerequisites**
 - **Node.js v20.x** installed locally  
