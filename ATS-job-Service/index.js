@@ -17,14 +17,20 @@ exports.handler = async (event) => {
         const method = event.requestContext.http.method;
         const body = event.body ? JSON.parse(event.body) : {};
         
-        // Security: Get User Role
-        const claims = event.requestContext.authorizer.jwt.claims;
+        // --- FIX STARTS HERE ---
+        // 1. Safely extract Authorizer (it might be undefined if public)
+        const authorizer = event.requestContext.authorizer || {};
+        const jwt = authorizer.jwt || {};
+        const claims = jwt.claims || {};
+        
+        // 2. Get User Role safely (default to empty array if no group)
         const groups = claims['cognito:groups'] || [];
         const isRecruiter = groups.includes("Recruiters");
+        // --- FIX ENDS HERE ---
 
         // --- POST: Create Job ---
         if (method === 'POST') {
-            if (!isRecruiter) return { statusCode: 403, body: "Recruiters only" };
+            if (!isRecruiter) return { statusCode: 403, body: JSON.stringify({ message: "Recruiters only" }) };
             const { company_id, recruiter_id, title, description } = body;
             const res = await client.query(
                 `INSERT INTO jobs (company_id, recruiter_id, title, description, status) 
@@ -34,7 +40,7 @@ exports.handler = async (event) => {
             return { statusCode: 201, body: JSON.stringify(res.rows[0]) };
         }
 
-        // --- GET: List Jobs ---
+        // --- GET: List Jobs (Public) ---
         if (method === 'GET') {
             const res = await client.query("SELECT * FROM jobs WHERE status = 'open'");
             return { statusCode: 200, body: JSON.stringify(res.rows) };
@@ -42,7 +48,7 @@ exports.handler = async (event) => {
 
         // --- DELETE: Remove Job ---
         if (method === 'DELETE') {
-            if (!isRecruiter) return { statusCode: 403, body: "Recruiters only" };
+            if (!isRecruiter) return { statusCode: 403, body: JSON.stringify({ message: "Recruiters only" }) };
             const jobId = event.pathParameters.id; 
             await client.query("DELETE FROM jobs WHERE job_id = $1", [jobId]);
             return { statusCode: 200, body: JSON.stringify({ message: "Job Deleted" }) };
@@ -50,7 +56,7 @@ exports.handler = async (event) => {
 
         // --- PUT: Update Job ---
         if (method === 'PUT') {
-            if (!isRecruiter) return { statusCode: 403, body: "Recruiters only" };
+            if (!isRecruiter) return { statusCode: 403, body: JSON.stringify({ message: "Recruiters only" }) };
             const jobId = event.pathParameters.id; 
             const { title, description, status } = body;
             const res = await client.query(
