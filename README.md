@@ -20,17 +20,16 @@ This system ensures scalable hiring workflows, strict state transitions, backgro
 
 # Table of Contents
 
-- [Architecture Overview](#-architecture-overview)
-- [Microservices](#-microservices)
-- [Workflow & State Management](#-workflow--state-management)
-- [Role-Based Access Control (RBAC)](#-role-based-access-control-rbac)
-- [Database Schema (ERD)](#-database-schema-erd)
-- [Folder Structure](#-folder-structure)
-- [Deployment Guide](#-deployment-guide)
-- [Setup & Installation](#-setup--installation)
-- [How to Test](#-how-to-test)
-- [Author](#-author)
-
+- [Architecture Overview](#architecture-overview)
+- [Microservices](#microservices)
+- [Workflow & State Management](#workflow--state-management)
+- [Role-Based Access Control (RBAC)](#role-based-access-control-rbac)
+- [Database Schema (ERD)](#database-schema-erd)
+- [Folder Structure](#folder-structure)
+- [Deployment Guide](#deployment-guide)
+- [Setup & Installation](#setup--installation)
+- [How to Test](#how-to-test)
+- [Author](#author)
 ---
 
 # Architecture Overview
