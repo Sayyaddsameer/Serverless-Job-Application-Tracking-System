@@ -141,17 +141,18 @@ Security is implemented at both:
 
 ---
 
-### **Endpoint Permissions**
+## Endpoint Permissions
 
-| Endpoint                         | Method        | Recruiter Role | Candidate Role | Description                               |
-|----------------------------------|---------------|----------------|----------------|-------------------------------------------|
-| `/jobs`                          | POST          | ✅              | ❌              | Post a new job opening                    |
-| `/jobs/{id}`                     | PUT / DELETE  | ✅              | ❌              | Edit or remove a job                      |
-| `/jobs`                          | GET           | ✅              | ✅              | View all open jobs                        |
-| `/apply`                         | POST          | ❌              | ✅              | Submit a new application                  |
-| `/my-applications`               | GET           | ❌              | ✅              | View own application history              |
-| `/job-applications`              | GET           | ✅              | ❌              | View all candidates for a job             |
-| `/applications/{id}/transition`  | POST          | ✅              | ❌              | Advance a candidate's stage               |
+| Endpoint                         | Method     | Recruiter | Candidate | Hiring Manager | Description                          |
+|----------------------------------|------------|-----------|-----------|----------------|--------------------------------------|
+| `/jobs`                          | POST       | ✅         | ❌         | ❌              | Post a new job opening               |
+| `/jobs/{id}`                     | PUT / DEL  | ✅         | ❌         | ❌              | Edit or remove a job                 |
+| `/jobs`                          | GET        | ✅         | ✅         | ✅              | View all open jobs                   |
+| `/apply`                         | POST       | ❌         | ✅         | ❌              | Submit a new application             |
+| `/my-applications`               | GET        | ❌         | ✅         | ❌              | View own application history         |
+| `/job-applications`              | GET        | ✅         | ❌         | ✅              | View all candidates for a job        |
+| `/applications/{id}/transition`  | POST       | ✅         | ❌         | ❌              | Advance a candidate's stage          |
+
 
 ## Database Schema (ERD)
 
