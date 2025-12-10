@@ -36,8 +36,8 @@ This system ensures scalable hiring workflows, strict state transitions, backgro
 
 ## Demo & Documentation
 
-🔗 **Video Demo:** `LINK_TO_YOUR_YOUTUBE_VIDEO_HERE`  
-🔗 **API Documentation:** `LINK_TO_YOUR_POSTMAN_DOCS_HERE`
+**Video Demo:** `LINK_TO_YOUR_YOUTUBE_VIDEO_HERE`  
+**API Documentation:** [Postman Public API Docs](https://documenter.getpostman.com/view/48093520/2sB3dQw9rQ)
 
 ---
 
