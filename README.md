@@ -141,8 +141,6 @@ Security is implemented at both:
 
 ## Endpoint Permissions
 
-## Endpoint Permissions
-
 | Endpoint                         | Method     | Recruiter | Candidate | Hiring Manager | Description                          |
 |----------------------------------|------------|-----------|-----------|----------------|--------------------------------------|
 | `/jobs`                          | POST       | Allowed   | Not Allowed | Not Allowed   | Post a new job opening               |
