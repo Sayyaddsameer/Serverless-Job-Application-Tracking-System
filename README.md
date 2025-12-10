@@ -141,15 +141,17 @@ Security is implemented at both:
 
 ## Endpoint Permissions
 
+## Endpoint Permissions
+
 | Endpoint                         | Method     | Recruiter | Candidate | Hiring Manager | Description                          |
 |----------------------------------|------------|-----------|-----------|----------------|--------------------------------------|
-| `/jobs`                          | POST       | ✅         | ❌         | ❌              | Post a new job opening               |
-| `/jobs/{id}`                     | PUT / DEL  | ✅         | ❌         | ❌              | Edit or remove a job                 |
-| `/jobs`                          | GET        | ✅         | ✅         | ✅              | View all open jobs                   |
-| `/apply`                         | POST       | ❌         | ✅         | ❌              | Submit a new application             |
-| `/my-applications`               | GET        | ❌         | ✅         | ❌              | View own application history         |
-| `/job-applications`              | GET        | ✅         | ❌         | ✅              | View all candidates for a job        |
-| `/applications/{id}/transition`  | POST       | ✅         | ❌         | ❌              | Advance a candidate's stage          |
+| `/jobs`                          | POST       | Allowed   | Not Allowed | Not Allowed   | Post a new job opening               |
+| `/jobs/{id}`                     | PUT / DEL  | Allowed   | Not Allowed | Not Allowed   | Edit or remove a job                 |
+| `/jobs`                          | GET        | Allowed   | Allowed   | Allowed        | View all open jobs                   |
+| `/apply`                         | POST       | Not Allowed | Allowed | Not Allowed   | Submit a new application             |
+| `/my-applications`               | GET        | Not Allowed | Allowed | Not Allowed   | View own application history         |
+| `/job-applications`              | GET        | Allowed   | Not Allowed | Allowed       | View all candidates for a job        |
+| `/applications/{id}/transition`  | POST       | Allowed   | Not Allowed | Not Allowed   | Advance a candidate's stage          |
 
 
 ## Database Schema (ERD)
@@ -242,15 +244,145 @@ Use the included **Postman Collection** to hit the API Gateway endpoint and test
 A complete Postman collection is included: ATS_Postman_Collection.json
 
 
-### **How to Test**
+## How to Test
 
-1. Import the collection into Postman  
-2. Get a **Recruiter Token** via the `/login` Cognito login flow  
-3. Create a job → `POST /jobs`  
-4. Get a **Candidate Token**  
-5. Apply for the job → `POST /apply`  
-6. Switch back to **Recruiter** and trigger the workflow → `POST /transition`  
-7. **Verify**: Check your email for the asynchronous notification  
+This API is secured using **Amazon Cognito**.  
+To fully verify the **RBAC (Role-Based Access Control)** system, you must act as three different users:
+
+- **Recruiter**  
+- **Candidate**  
+- **Hiring Manager**
+
+### Prerequisites
+
+- Postman installed  
+- AWS CLI installed and configured  
+- API Base URL:  https://YOUR_API_ID.execute-api.us-east-1.amazonaws.com/prod
+
+### Step 1: Configure Environment
+
+1. Import the Postman Collection:  ATS_Postman_Collection.json
+2. Open the **Variables** tab in Postman  
+3. Paste your API Gateway URL into the `api_url` variable  
+
+---
+
+### Step 2: Generate Authentication Tokens
+
+This system uses **Amazon Cognito**, so you must generate fresh **JWT ID Tokens** for each role.
+
+**Get Recruiter Token (Full Access)**
+
+```bash
+aws cognito-idp initiate-auth \
+--auth-flow USER_PASSWORD_AUTH \
+--client-id YOUR_COGNITO_CLIENT_ID \
+--auth-parameters USERNAME=recruiter1@example.com,PASSWORD=Example@123
+```
+
+**Action: Copy the IdToken and paste it into the recruiter_token variable in Postman.**
+
+**Get Candidate Token (Limited Access)**
+
+```bash
+aws cognito-idp initiate-auth \
+  --auth-flow USER_PASSWORD_AUTH \
+  --client-id YOUR_COGNITO_CLIENT_ID \
+  --auth-parameters USERNAME=candidate1@example.com,PASSWORD=Example@123
+```
+
+**Action: Paste into the candidate_token variable.**
+
+**Get Hiring Manager Token (Read-Only):** 
+```bash
+aws cognito-idp initiate-auth \
+  --auth-flow USER_PASSWORD_AUTH \
+  --client-id YOUR_COGNITO_CLIENT_ID \
+  --auth-parameters USERNAME=hiringmanager@example.com,PASSWORD=Example@123
+```
+
+**Action: Paste into the hiring_manager_token variable.**
+
+### Step 3: Run the Test Scenarios
+
+---
+
+## **Phase 1: The "Happy Path" (Core Workflow)**  
+Run these requests in order to generate all required IDs.
+
+### **1. Create Job (Recruiter)**  
+- **Request:** `POST /jobs`  
+- **Action:** Copy the `job_id` from the response (e.g., **101**)
+
+---
+
+### **2. List Jobs (Public)**  
+- **Request:** `GET /jobs`  
+- **Verification:** Confirm your created job appears in the list.
+
+---
+
+### **3. Apply for Job (Candidate)**  
+- **Request:** `POST /apply`  
+- **Action 1:** Paste the `job_id` (e.g., **101**) into the request body  
+- **Action 2:** Copy the returned `application_id` (e.g., **55**)
+
+---
+
+### **4. View Applicants (Recruiter)**  
+- **Request:** `GET /job-applications`  
+- **Action:** Ensure query parameter: `job_id=101`
+
+---
+
+### **5. Trigger Workflow (Advance Candidate) (Recruiter)**  
+- **Request:** `POST /applications/{id}/transition`  
+- **Action:** Replace `{id}` with your `application_id` (e.g., **55**)
+
+---
+
+### **Verification**
+- **AWS Step Functions:** Execution should be **Green / Successful**  
+- **Email Notification:** Candidate receives **SES confirmation**
+
+---
+
+## **Phase 2: The "User Experience" Check**
+
+### **1. View My Applications (Candidate)**  
+- **Request:** `GET /my-applications`  
+- **Verification:** Candidate sees their own application status (e.g., `"Screening"`)
+
+---
+
+### **2. Update Job (Recruiter)**  
+- **Request:** `PUT /jobs/{id}`  
+- **Action:** Modify the title or description to validate update logic
+
+---
+
+## **Phase 3: Security & Cleanup (Destructive Tests)**
+
+### **1. View Applicants (Allowed) (Hiring Manager)**  
+- **Request:** `GET /job-applications`  
+- **Result:** `200 OK` → Confirms Hiring Manager has **Read access**
+
+---
+
+### **2. SECURITY TEST: Create Job (Hiring Manager)**  
+- **Request:** `POST /jobs`  
+- **Result:** **403 Forbidden**  
+  - This confirms the Hiring Manager **cannot** create jobs.
+
+---
+
+### **3. Delete Job (Recruiter)**  
+- **Request:** `DELETE /jobs/{id}`  
+- **Action:** Use your original `job_id` (e.g., **101**) to clean up test data.
+
+---
+
+
 
 ---
 
