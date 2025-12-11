@@ -26,8 +26,8 @@ This system ensures scalable hiring workflows, strict state transitions, backgro
 - [Role-Based Access Control (RBAC)](#role-based-access-control-rbac)
 - [Database Schema (ERD)](#database-schema-erd)
 - [Folder Structure](#folder-structure)
-- [Deployment Guide](#deployment-guide)
 - [Setup & Installation](#setup--installation)
+- [Deployment Guide](#deployment-guide)
 - [How to Test](#how-to-test)
 - [Author](#author)
 ---
@@ -115,8 +115,6 @@ Security is implemented at both:
 - **API Gateway level** (Authorizers)
 - **Lambda level** (Business Logic Validation)
 
----
-
 ## Endpoint Permissions
 
 | Endpoint                         | Method     | Recruiter | Candidate | Hiring Manager | Description                          |
@@ -190,6 +188,47 @@ erDiagram
 
 ---
 
+## Setup & Installation
+
+### **1. Prerequisites**
+- **Node.js v20.x** installed locally  
+- **AWS Account** (Free Tier recommended)  
+- **PostgreSQL Client** (e.g., DBeaver) for database initialization  
+
+### **2. Environment Variables**
+
+Every Lambda function requires the following environment variables to be set in the AWS Console:
+
+```bash
+DB_HOST=ats-db.xxxx.us-east-1.rds.amazonaws.com
+DB_USER=postgres
+DB_PASSWORD=YOUR_SECURE_PASSWORD
+DB_NAME=postgres
+QUEUE_URL=https://sqs.us-east-1.amazonaws.com/YOUR_ACCOUNT/ats-email-queue
+STATE_MACHINE_ARN=arn:aws:states:us-east-1:xxxx:stateMachine:ATS-Application-Workflow
+```
+
+### 3. Database Initialization
+
+Run the SQL script located at: `/database/schema.sql`
+
+This will create all necessary tables and constraints for the ATS system.
+
+### 4. Running the Project
+
+Since this is a **Serverless project**, there is no single "server" to start.
+
+#### **Deploy Microservices**
+Zip and upload each microservice folder (e.g., `ats-job-service`, `ats-application-service`, etc.) to its corresponding **AWS Lambda** function.
+
+#### **Configure API Gateway**
+Map all routes as defined in the **Architecture** section.
+
+#### **Verify Deployment**
+Use the included **Postman Collection** to hit the API Gateway endpoint and test functionality.
+
+---
+
 ## Deployment Guide
 
 Since this project uses a microservices architecture, deployment involves configuring AWS services individually. Below is the manual deployment strategy used for this portfolio project.
@@ -255,57 +294,6 @@ Repeat this process for **each** microservice folder (e.g., `ATS-Job-Service`, `
 
 ---
 
-## Setup & Installation
-
-### **1. Prerequisites**
-- **Node.js v20.x** installed locally  
-- **AWS Account** (Free Tier recommended)  
-- **PostgreSQL Client** (e.g., DBeaver) for database initialization  
-
----
-
-### **2. Environment Variables**
-
-Every Lambda function requires the following environment variables to be set in the AWS Console:
-
-```bash
-DB_HOST=ats-db.xxxx.us-east-1.rds.amazonaws.com
-DB_USER=postgres
-DB_PASSWORD=YOUR_SECURE_PASSWORD
-DB_NAME=postgres
-QUEUE_URL=https://sqs.us-east-1.amazonaws.com/YOUR_ACCOUNT/ats-email-queue
-STATE_MACHINE_ARN=arn:aws:states:us-east-1:xxxx:stateMachine:ATS-Application-Workflow
-```
-
-### 3. Database Initialization
-
-Run the SQL script located at: /database/schema.sql
-
-
-This will create all necessary tables and constraints for the ATS system.
-
----
-
-### 4. Running the Project
-
-Since this is a **Serverless project**, there is no single "server" to start.
-
-#### **Deploy Microservices**
-Zip and upload each microservice folder (e.g., `ats-job-service`, `ats-application-service`, etc.) to its corresponding **AWS Lambda** function.
-
-#### **Configure API Gateway**
-Map all routes as defined in the **Architecture** section.
-
-#### **Verify Deployment**
-Use the included **Postman Collection** to hit the API Gateway endpoint and test functionality.
-
----
-
-## Testing (Postman)
-
-A complete Postman collection is included: ATS_Postman_Collection.json
-
-
 ## How to Test
 
 This API is secured using **Amazon Cognito**.  
@@ -365,9 +353,9 @@ aws cognito-idp initiate-auth \
 
 **Action: Paste into the hiring_manager_token variable.**
 
-### Step 3: Run the Test Scenarios
-
 ---
+
+### Step 3: Run the Test Scenarios
 
 ## **Phase 1: The "Happy Path" (Core Workflow)**  
 Run these requests in order to generate all required IDs.
@@ -376,38 +364,27 @@ Run these requests in order to generate all required IDs.
 - **Request:** `POST /jobs`  
 - **Action:** Copy the `job_id` from the response (e.g., **101**)
 
----
-
 ### **2. List Jobs (Public)**  
 - **Request:** `GET /jobs`  
 - **Verification:** Confirm your created job appears in the list.
-
----
 
 ### **3. Apply for Job (Candidate)**  
 - **Request:** `POST /apply`  
 - **Action 1:** Paste the `job_id` (e.g., **101**) into the request body  
 - **Action 2:** Copy the returned `application_id` (e.g., **55**)
 
----
-
 ### **4. View Applicants (Recruiter)**  
 - **Request:** `GET /job-applications`  
 - **Action:** Ensure query parameter: `job_id=101`
-
----
 
 ### **5. Trigger Workflow (Advance Candidate) (Recruiter)**  
 - **Request:** `POST /applications/{id}/transition`  
 - **Action:** Replace `{id}` with your `application_id` (e.g., **55**)
 
----
-
 ### **Verification**
 - **AWS Step Functions:** Execution should be **Green / Successful**  
 - **Email Notification:** Candidate receives **SES confirmation**
 
----
 
 ## **Phase 2: The "User Experience" Check**
 
@@ -415,13 +392,10 @@ Run these requests in order to generate all required IDs.
 - **Request:** `GET /my-applications`  
 - **Verification:** Candidate sees their own application status (e.g., `"Screening"`)
 
----
-
 ### **2. Update Job (Recruiter)**  
 - **Request:** `PUT /jobs/{id}`  
 - **Action:** Modify the title or description to validate update logic
 
----
 
 ## **Phase 3: Security & Cleanup (Destructive Tests)**
 
@@ -429,14 +403,10 @@ Run these requests in order to generate all required IDs.
 - **Request:** `GET /job-applications`  
 - **Result:** `200 OK` → Confirms Hiring Manager has **Read access**
 
----
-
 ### **2. SECURITY TEST: Create Job (Hiring Manager)**  
 - **Request:** `POST /jobs`  
 - **Result:** **403 Forbidden**  
   - This confirms the Hiring Manager **cannot** create jobs.
-
----
 
 ### **3. Delete Job (Recruiter)**  
 - **Request:** `DELETE /jobs/{id}`  
@@ -444,8 +414,6 @@ Run these requests in order to generate all required IDs.
 
 ---
 
+### **Author**
 
-
----
-
-### **Built by Sameer Sayyad**
+**Built by Sayyad Sameer**
