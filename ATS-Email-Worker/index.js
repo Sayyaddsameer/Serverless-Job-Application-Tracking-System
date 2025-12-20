@@ -1,7 +1,16 @@
 const { SESClient, SendEmailCommand } = require("@aws-sdk/client-ses");
 const ses = new SESClient({ region: "us-east-1" });
 
+// --- FIX: LOAD FROM ENVIRONMENT VARIABLE ---
+const SENDER_EMAIL = process.env.SENDER_EMAIL;
+
 exports.handler = async (event) => {
+    // Safety check
+    if (!SENDER_EMAIL) {
+        console.error("Missing SENDER_EMAIL environment variable");
+        return { status: "Error", message: "Configuration Error" };
+    }
+
     console.log("Processing batch size:", event.Records.length);
 
     for (const record of event.Records) {
@@ -9,15 +18,22 @@ exports.handler = async (event) => {
             // 1. Parse the message body sent by SQS
             const body = JSON.parse(record.body);
             
-            // Use the email sent from Step Function, or fallback to a default
-            const candidateEmail = body.candidate_email || "sayyadsameerM3@gmail.com"; 
+            // Use the email sent from Step Function, or fallback
+            // Note: In production, never fallback to a hardcoded email, 
+            // but for this portfolio logic it handles missing data gracefully.
+            const candidateEmail = body.candidate_email; 
             const messageText = body.msg || "Your application status has been updated.";
+
+            if (!candidateEmail) {
+                console.log("Skipping record: No candidate email provided");
+                continue;
+            }
 
             // 2. Define Email Params
             const params = {
-                Source: "sameer@example.com", // REPLACE THIS with your Verified Sender Email
+                Source: SENDER_EMAIL, // USES ENV VARIABLE NOW
                 Destination: { 
-                    ToAddresses: [candidateEmail] // REPLACE THIS if testing with a specific verified email
+                    ToAddresses: [candidateEmail] 
                 },
                 Message: {
                     Subject: { Data: "ATS Notification" },
@@ -33,7 +49,7 @@ exports.handler = async (event) => {
 
         } catch (err) {
             console.error("Error sending email:", err);
-            // We don't throw error here so we don't crash the whole batch
+            // We don't throw error here so we don't crash the whole batch processing
         }
     }
     return { status: "Done" };
