@@ -2,8 +2,11 @@ const { Client } = require('pg');
 const { SQSClient, SendMessageCommand } = require("@aws-sdk/client-sqs");
 
 const sqs = new SQSClient({ region: "us-east-1" });
-// REPLACE WITH YOUR QUEUE URL
-const QUEUE_URL = "https://sqs.us-east-1.amazonaws.com/785269092008/ats-email-queue"; 
+
+const QUEUE_URL = process.env.QUEUE_URL; 
+if (!QUEUE_URL) {
+    throw new Error("QUEUE_URL environment variable is missing");
+}
 
 const dbConfig = {
     host: process.env.DB_HOST,
@@ -41,7 +44,7 @@ exports.handler = async (event) => {
                 [body.job_id, user.user_id]
             );
 
-            // Notify Candidate AND Recruiter (Requirement: "To Recruiter")
+            // Notify Candidate AND Recruiter
             await sqs.send(new SendMessageCommand({
                 QueueUrl: QUEUE_URL,
                 MessageBody: JSON.stringify({
@@ -67,9 +70,7 @@ exports.handler = async (event) => {
         }
 
         // --- GET /job-applications (Recruiters OR Hiring Managers) ---
-        // Requirement: "Recruiters can view... Hiring Managers can view"
         if (method === 'GET' && path === '/job-applications') {
-            // Allow both roles
             if (user.role !== 'recruiter' && user.role !== 'hiring_manager') {
                 return { statusCode: 403, body: "Access Denied: Management Only" };
             }
