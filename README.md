@@ -253,9 +253,14 @@ Repeat this process for **each** microservice folder (e.g., `ATS-Job-Service`, `
     * Go to the AWS Lambda Console.
     * Create a function (Runtime: **Node.js 20.x**).
     * Upload the `.zip` file.
-4.  **Configuration:** Go to **Configuration** -> **Environment Variables** and add:
-    * `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`.
-    * *(For the Trigger Lambda only)*: Add `STATE_MACHINE_ARN`.
+4.  Go to **Configuration → Environment Variables** in AWS Lambda and add the required keys based on the microservice you are deploying.
+
+| Microservice | Required Environment Variables |
+|--------------|--------------------------------|
+| **All DB Services**<br/>(Job, Application, User-Sync, State-Updater) | `DB_HOST`<br/>`DB_USER`<br/>`DB_PASSWORD`<br/>`DB_NAME` |
+| **ATS-Application-Service** | `QUEUE_URL` (Copy from SQS Console)<br/> All DB variables above |
+| **ATS-Workflow-Trigger** | `STATE_MACHINE_ARN` (Copy from Step Functions) |
+| **ATS-Email-Worker** | `SENDER_EMAIL` (Verified Amazon SES email address) |
 
 ### 3. AWS Step Functions
 1.  Create a **Standard State Machine**.
